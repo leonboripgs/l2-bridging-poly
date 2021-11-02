@@ -9,17 +9,12 @@ import "./interfaces/ISpiritOrbPetsv0.sol";
 contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
 
     string _baseTokenURI;
-    uint256 private _price = 0.01 ether;
     bool public _paused = false;
     ISpiritOrbPetsv0 public SOPv0;
 
     // Contracts allowed to change pet variables
     // i.e. Pet Care contract
     address[] public _approvedContracts;
-
-    // Whitelist variables
-    bool public _whitelistPaused = true;
-    mapping(uint256 => bool) private _claimedMintList;
 
     // Maximum amount of Pets in existance.
     uint256 public constant MAX_PET_SUPPLY = 7777;
@@ -29,6 +24,7 @@ contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
     event Minted(address sender, uint256 numberOfPets);
 
     struct Pet {
+      address owner;
       uint16 id; // max possible is 65535, but will only to go 7777
       uint8 level; // max possble is 255, but will only go to 30
       bool active;
@@ -153,40 +149,20 @@ contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
     }
 
     function createPet(uint16 id) internal {
-      pets[id] = Pet(id, 1, false, 0, 0, 0, 0, 0);
+      pets[id] = Pet(address(0x0), id, 1, false, 0, 0, 0, 0, 0);
     }
 
-    function mintPetWhitelisted(uint256[] memory petIdsToClaimFor) public payable {
-      uint256 supply = totalSupply();
-      require(!_whitelistPaused, "Whitelisted pet adoption has not yet begun.");
-      require(supply < MAX_PET_SUPPLY, "Adoption has already ended.");
-
-      uint256 numberOfPets = 0;
-
-      for (uint i = 0; i < petIdsToClaimFor.length; i++) {
-        require(msg.sender == SOPv0.ownerOf(petIdsToClaimFor[i]), "You don't own this pet");
-        require(!_claimedMintList[petIdsToClaimFor[i]], "You have already claimed a mint for this pet!");
-        numberOfPets++;
-        _claimedMintList[petIdsToClaimFor[i]] = true;
-      }
-
-      require(supply + numberOfPets <= MAX_PET_SUPPLY, "Exceeds maximum Pets available. Please try to adopt less Pets.");
-      require(_price * numberOfPets == msg.value, "Amount of Ether sent is not correct.");
-
-      // Mint the amount of provided Pets.
-      for (uint i = 0; i < numberOfPets; i++) {
-        _safeMint(msg.sender, supply + i);
-        createPet(uint16(supply + i));
-      }
-
-      emit Minted(msg.sender, numberOfPets);
-    }
-
-    /**
-    * @dev Checks to see if a v0 pet claim has been taken yet.  Returns true it has been taken
-    */
-    function hasV0PetClaimedWhitelist(uint16 petNumber) public view returns (bool) {
-      return _claimedMintList[petNumber];
+    function updatePet(
+      address sender, 
+      uint16 tokenId, 
+      uint8 level, 
+      bool active, 
+      uint64 cdPlay, 
+      uint64 cdFeed, 
+      uint64 cdClean, 
+      uint64 cdTrain, 
+      uint64 cdDaycare) external inApprovedContractList {
+        pets[tokenId] = Pet(sender, tokenId, level, active, cdPlay, cdFeed, cdClean, cdTrain, cdDaycare);
     }
 
     function mintPet(uint256 numberOfPets) public payable {
@@ -196,7 +172,6 @@ contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
       require(numberOfPets > 0, "You cannot adopt 0 Pets.");
       require(numberOfPets <= 7, "You are not allowed to adopt this many Pets at once.");
       require(supply + numberOfPets <= MAX_PET_SUPPLY, "Exceeds maximum Pets available. Please try to adopt less Pets.");
-      require(_price * numberOfPets == msg.value, "Amount of Ether sent is not correct.");
 
       // Mint the amount of provided Pets.
       for (uint i = 0; i < numberOfPets; i++) {
@@ -225,19 +200,11 @@ contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
       _baseTokenURI = baseURI;
     }
 
-    function getPrice() public view returns (uint256){
-      return _price;
-    }
-
     /**
     * @dev This is permanent and one-way so contract owner can't disallow activation of pets
     */
     function unpauseMint() external onlyOwner {
       _paused = false;
-    }
-
-    function unpauseWhiteList() external onlyOwner {
-      _whitelistPaused = false;
     }
 
     /**

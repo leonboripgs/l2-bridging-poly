@@ -22,6 +22,16 @@ interface ISpiritOrbPetsv1 is IERC721, IERC721Enumerable {
   function getMaxPetLevel() external view returns (uint8);
   function petName(uint16 id) external view returns (string memory);
 
+  function updatePet(
+      address sender, 
+      uint16 tokenId, 
+      uint8 level, 
+      bool active, 
+      uint64 cdPlay, 
+      uint64 cdFeed, 
+      uint64 cdClean, 
+      uint64 cdTrain, 
+      uint64 cdDaycare) external;  
   function setPetName(uint16 id, string memory name) external;
   function setPetLevel(uint16 id, uint8 level) external;
   function setPetActive(uint16 id, bool active) external;

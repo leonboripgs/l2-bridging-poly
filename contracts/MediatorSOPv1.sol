@@ -12,6 +12,7 @@ contract MediatorSOPv1 is IERC721Receiver, Ownable {
     uint16 count;
 
     struct Pet {
+      address sender;
       uint16 id; // max possible is 65535, but will only to go 7777
       uint8 level; // max possble is 255, but will only go to 30
       bool active;
@@ -34,26 +35,50 @@ contract MediatorSOPv1 is IERC721Receiver, Ownable {
 
 
     constructor(address _SOPv1) {
-        SOPv1 = ISpiritOrbPetsv1(_SOPv1);
-        count = 0;
+      SOPv1 = ISpiritOrbPetsv1(_SOPv1);
+      count = 0;
     }
 
     function startBridgeToL2(uint16 _tokenId) external {
-        require(msg.sender == SOPv1.ownerOf(_tokenId), "You don't own this token");
-        _startBridgeToL2(msg.sender, _tokenId);
+      require(msg.sender == SOPv1.ownerOf(_tokenId), "You don't own this token");
+      _startBridgeToL2(msg.sender, _tokenId);
     }
 
     function _startBridgeToL2(address _sender, uint16 _tokenId) internal {
 
-        (uint8 level, bool active) = SOPv1.getPetInfo(_tokenId);
-        (uint64 cdPlay, uint64 cdFeed, uint64 cdClean, uint64 cdTrain, uint64 cdDaycare) = SOPv1.getPetCooldowns(_tokenId);
+      (uint8 level, bool active) = SOPv1.getPetInfo(_tokenId);
+      (uint64 cdPlay, uint64 cdFeed, uint64 cdClean, uint64 cdTrain, uint64 cdDaycare) = SOPv1.getPetCooldowns(_tokenId);
 
-        SOPv1.safeTransferFrom(_sender, address(this), _tokenId);
-        petIds[count] = _tokenId;
-        
-        count ++;
+      SOPv1.safeTransferFrom(_sender, address(this), _tokenId);
+      petIds[count] = _tokenId;
+      
+      count ++;
 
-        emit StartToL2(_sender, _tokenId, level, active, cdPlay, cdFeed, cdClean, cdTrain, cdDaycare);
+      emit StartToL2(_sender, _tokenId, level, active, cdPlay, cdFeed, cdClean, cdTrain, cdDaycare);
+    }
+
+    function finishBridgeToL2(
+      address sender, 
+      uint256 tokenId, 
+      uint8 level, 
+      bool active, 
+      uint64 cdPlay, 
+      uint64 cdFeed, 
+      uint64 cdClean, 
+      uint64 cdTrain, 
+      uint64 cdDaycare) external onlyOwner {
+      require(SOPv1.ownerOf(tokenId) == address(this), "Mediator should own the token");
+      SOPv1.safeTransferFrom(address(this), sender, tokenId);
+      SOPv1.updatePet(
+        sender, 
+        uint16(tokenId), 
+        level, 
+        active, 
+        cdPlay, 
+        cdFeed, 
+        cdClean, 
+        cdTrain, 
+        cdDaycare);
     }
 
     /**
