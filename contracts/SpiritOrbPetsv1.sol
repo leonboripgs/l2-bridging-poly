@@ -165,7 +165,7 @@ contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
         pets[tokenId] = Pet(sender, tokenId, level, active, cdPlay, cdFeed, cdClean, cdTrain, cdDaycare);
     }
 
-    function mintPet(uint256 numberOfPets) public payable {
+    function mintPet(address owner, uint256 numberOfPets) external onlyOwner {
       uint256 supply = totalSupply();
       require(!_paused, "Pet adoption has not yet begun.");
       require(supply < MAX_PET_SUPPLY, "Adoption has already ended.");
@@ -175,7 +175,7 @@ contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
 
       // Mint the amount of provided Pets.
       for (uint i = 0; i < numberOfPets; i++) {
-          _safeMint(address(this), supply + i);
+          _safeMint(owner, supply + i);
           createPet(uint16(supply + i));
       }
 
