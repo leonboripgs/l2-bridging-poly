@@ -1,0 +1,26 @@
+{
+  "name": "spriti-orb-pets-mediator",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "@truffle/hdwallet-provider": "^1.5.0",
+    "dotenv": "^10.0.0",
+    "fs": "^0.0.1-security",
+    "ganache-cli": "^6.12.2",
+    "truffle": "^5.4.10",
+    "truffle-assertions": "^0.9.2",
+    "truffle-plugin-verify": "^0.5.16"
+  },
+  "scripts": {
+    "compile": "truffle compile",
+    "mainnet": "truffle migrate --network main --reset",
+    "kovan": "truffle migrate --network kovan --reset",
+    "ropsten": "truffle migrate --network ropsten --reset && truffle run verify SpiritOrbPetsv1 MediatorSOPv1 --network ropsten",
+    "mumbai": "truffle migrate --network mumbai --reset && truffle run verify SpiritOrbPetsv1 MediatorSOPv1 --network mumbai",
+    "verify-ropsten": "truffle run verify SpiritOrbPetsv1 MediatorSOPv1 --network ropsten",
+    "verify-main": "truffle run verify CivInvestment --network main",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "0xCODE"
+}
