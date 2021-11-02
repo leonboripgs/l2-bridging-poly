@@ -175,7 +175,7 @@ contract SpiritOrbPetsv1 is ERC721Enumerable, Ownable {
 
       // Mint the amount of provided Pets.
       for (uint i = 0; i < numberOfPets; i++) {
-          _safeMint(msg.sender, supply + i);
+          _safeMint(address(this), supply + i);
           createPet(uint16(supply + i));
       }
 
